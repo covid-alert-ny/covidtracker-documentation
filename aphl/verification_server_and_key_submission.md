@@ -39,7 +39,7 @@ Verification codes are requested by an EPI when a user has tested positive for C
 <td>
 
     {
-       "onsetDate": "yyyy-mm-dd of symptom onset, optional",
+       "daysSinceOnset": # of days since symptom onset, optional,
        "testDate": "yyyy-mm-dd of test, optional"
     }
 
@@ -149,7 +149,87 @@ The system __NEVER__ stores the mobile number.
 
 __Open Question__: To support people who don't want to give their mobile # should we also have an endpoint that can send an email?
 
-## Submitting Verification Codes
+## Verification Code Validation
+
+Diagram steps (4) and (5).
+
+The user enters their VC into the App.
+
+<table>
+<tr>
+<td>Initiator</td>
+<td>The user, upon receiving a VC from the EPI</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>POST to `/vc/validate`</td>
+</tr>
+<tr>
+<td>Authn/Authz</td>
+<td>TBD, though I'd like to use a JWT given to the user when they register in the system</td>
+</tr>
+<tr>
+<td>Input</td>
+<td>
+
+    {
+       "code": "8 digit verification code"
+    }
+
+</td>
+</tr>
+</table>
+
+#### Description
+
+The user submits their VC to the verification server for validation. The server will 
+
+1. Validate the VC is the correct length and confirm check value
+2. Check rate limits on the user - only allowed to submit 1 VC per second. This is done by storing on the user record the last time they tried to validate a VC.
+3. Check whether the VC is a valid code and hasn't expired. This is done by attempting to delete the VC from the `verification_codes` table. If the record can be deleted then it existed and was a valid VC.
+4. Generate a new JWT with a TTL of 24 hours. It does not need to contain any claims, nor does it need to identify the user at all.
+5. Return the JWT to the caller.
+
+#### Response
+
+<table>
+<tr><th>Code</th><th>Data / Meaning</th></tr>
+<tr>
+<td>200</td>
+<td>
+
+    {
+       "token": "valid JWT with 24hr expiry",
+    }
+</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Caller is not authorized to use this endpoint</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Code is not valid or does not exist</td>
+</tr>
+<tr>
+<tr>
+<td>410</td>
+<td>Code has expired</td>
+</tr>
+<tr>
+</tr>
+<tr>
+<td>429</td>
+<td>To many requests from the user, ie rate limit exceeded</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Server error</td>
+</tr>
+</table>
+
+__Open Question__: Do we want to include a set of claims in the returned JWT? Technically this JWT is only used to verify the user was able to submit a valid VC and that they did so within some defined duration. 
+
 
 ## Request Signiture of TEKs and Metadata
 
