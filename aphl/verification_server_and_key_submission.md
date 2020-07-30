@@ -17,6 +17,8 @@ The foollowing Verification Flow Diagram can be used to help indicate which part
 
 ## Requesting Verification Codes
 
+Diagram Steps (1), (2), and (3).
+
 Verification codes are requested by an EPI when a user has tested positive for Covid-19. The EPI (or an automated SMS text message) will transmit the VC to the user.
 
 | | |
@@ -44,6 +46,8 @@ The `verification_codes` table has a primary key / unique index on the VC value.
 __Open Question__: We should discuss whether the PHA will submit transmission risk overrides, or if we will use the App calculated transmission risks. If PHA provided, then they will be added to this input data object.
 
 ## Sending Verification Codes
+
+Diagram Step (3) (alternative option)
 
 The EPI can initiate a automated transfer of a VC to the user.
 
