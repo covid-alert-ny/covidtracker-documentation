@@ -275,7 +275,7 @@ The user submits their VC to the verification server for validation. The server 
 
 ## Request Signature of TEKs and Metadata
 
-Diagram steps (6) and (7).
+Diagram steps (6) and (7), or (10) and (11).
 
 The user chooses to submit their TEKs to the key server.
 
@@ -309,7 +309,12 @@ The user chooses to submit their TEKs to the key server.
 
     {
        "verificationJWT": "JWT allowing user to request their next tekSubmissionJWT",
-       "tekSubmissionJWT": "JWT allowing user to submit TEKs to key server"
+       "tekSubmissionJWT": "JWT allowing user to submit TEKs to key server",
+       "metadata": 	{
+         "daysSinceSymptomOnset": number,
+         "testDate": "2020-09-01"
+         "diagnosisType": "some valid diagnosis type, if we track that"
+       }
     }
 </td>
 </tr>
@@ -354,5 +359,78 @@ The user requests ability to submit their TEKs to the key server.
 1. Should the TTL of the `verification_token` and associated JWT be on day boundaries?
 2. Should the `verification_token` and associated JWT have a longer TTL so it can be used anywhere in the next 14 days?
 3. Should the `verification_token` record be created with a 14 day expiration, allowing the creation of verification tokens anywhere within that 14 day period?
+4. Should the `tekSubmissionJWT` have a short TTL? Giving it a short TTL will limit the ability of users to make lots of submission requests to the key server
 
 ## Submitting TEKs and Metadata
+
+Diagram steps (8) and (9), or (12) and (13).
+
+The user chooses to submit their TEKs to the key server and has received a valid `tekSubmissionJWT`
+
+<table>
+<tr>
+<td>Initiator</td>
+<td>The user, choosing to submit their TEKs</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>POST to `/tek/submit`</td>
+</tr>
+<tr>
+<td>Authn/Authz</td>
+<td>Validates the `tekSubmissionJWT` </td>
+</tr>
+<tr>
+<td>Input</td>
+<td>
+
+    {
+       "tekSubmissionJWT": "Valid submission JWT the tek and user-metadata HMAC and the VS-metadata",
+       "userMetadata": "User provided metadata",
+       "verificationServerMetadata": "verification server provided metadata"
+       "hmacKey": "private key used in App to generate the HMAC of the TEKs and User-metadata",
+       "teks": "TEKs being submitted" 
+    }
+</td>
+</tr>
+<tr><td>Responses</td><td></td></tr>
+<tr>
+<td>200</td>
+<td>
+
+    {
+       "tekRevocationJWT": "JWT allowing user to revoke or revise their submitted TEKs",
+    }
+</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Something in the request is invalid</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Caller is not authorized to use this endpoint or tekSubmissionJWT and claims cannot be validated</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Server error</td>
+</tr>
+
+</table>
+
+#### Description
+
+The user submits their TEKs to the key server. 
+
+1. Validate the `tekSubmissionJWT` was signed by us and hasn't expired.
+2. Verify the TEKs are valid TEKs
+3. Calculate an HMAC of the TEKs + user-metadata and confirm the passed HMAC matches
+4. ?? Do something with the user and verification server metadata ??
+5. Store the TEKs in some table for exposed temporary exposure keys
+6. Generate a tekRevocationJWT
+
+#### Open Questions
+
+1. What are the names of the input values in the APHL system?
+2. Is the tekSubmissionJWT passed in the authorization header?
+3. How is the metadata used?
