@@ -21,12 +21,31 @@ Diagram Steps (1), (2), and (3).
 
 Verification codes are requested by an EPI when a user has tested positive for Covid-19. The EPI (or an automated SMS text message) will transmit the VC to the user.
 
-| | |
-|:--- |:--- |
-| Initiator | The EPI, using a PHA controlled website will send an HTTP request to the verification service. |
-| Endpoint  | POST `/vc/generate` |
-| Authn/Authz | Authorization Bearer JWT providing caller with ability to generate verification codes |
-| Input | <pre lang="json">{<br>  "onsetDate": "yyyy-mm-dd of symptom onset, optional",<br>  "testDate": "yyyy-mm-dd of test, optional"<br>}</pre> |
+<table>
+<tr>
+<td>Initiator</td>
+<td>The EPI, using a PHA controlled website will send an HTTP request to the verification service.</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>POST to `/vc/generate`</td>
+</tr>
+<tr>
+<td>Authn/Authz</td>
+<td>Authorization Bearer JWT providing caller with ability to generate verification codes</td>
+</tr>
+<tr>
+<td>Input</td>
+<td>
+
+    {
+       "onsetDate": "yyyy-mm-dd of symptom onset, optional",
+       "testDate": "yyyy-mm-dd of test, optional"
+    }
+
+</td>
+</tr>
+</table>
 
 #### Description
 
@@ -36,12 +55,31 @@ The `verification_codes` table has a primary key / unique index on the VC value.
 
 #### Response
 
-| Code | Data / Meaning |
-| :---: | :--- |
-| 200 | <pre lang="json">{<br>  "code": "8 character verification code, likely all numbers",<br>  "expiry": "UTC timestamp when this verification code will expire"<br>}</pre> |
-| 400 | Bad request, indicating the metadata is not valid |
-| 401 | Caller is not authorized to use this endpoint (the JWT was rejected) |
-| 500 | Server error |
+<table>
+<tr><th>Code</th><th>Data / Meaning</th></tr>
+<tr>
+<td>200</td>
+<td>
+
+    {
+       "code": "8 character verification code, likely all numbers",
+       "expiry": "UTC timestamp when this verification code will expire"
+    }
+</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Bad request, indicating the metadata is not valid</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Caller is not authorized to use this endpoint (the JWT was rejected)</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Server error</td>
+</tr>
+</table>
 
 __Open Question__: We should discuss whether the PHA will submit transmission risk overrides, or if we will use the App calculated transmission risks. If PHA provided, then they will be added to this input data object.
 
@@ -51,18 +89,63 @@ Diagram Step (3) (alternative option)
 
 The EPI can initiate a automated transfer of a VC to the user.
 
-| | |
-|:--- |:--- |
-| Initiator | The EPI, using a PHA controlled website will send an HTTP request to the verification service. |
-| Endpoint  | POST `/vc/send/sms` |
-| Authn/Authz | Authorization Bearer JWT providing caller with ability to send verification codes |
-| Input | <pre lang="json">{<br>  "code": "8 digit verification code",<br>  "mobile": "User's mobile phone #"<br>}</pre> |
+<table>
+<tr>
+<td>Initiator</td>
+<td>The EPI, using a PHA controlled website will send an HTTP request to the verification service.</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>POST to `/vc/send/sms`</td>
+</tr>
+<tr>
+<td>Authn/Authz</td>
+<td>Authorization Bearer JWT providing caller with ability to send verification codes</td>
+</tr>
+<tr>
+<td>Input</td>
+<td>
+
+    {
+       "code": "8 digit verification code",
+       "mobile": "User's mobile phone #"
+    }
+
+</td>
+</tr>
+</table>
 
 #### Description
 
 The handler will verify the authorization header and ensure the JWT has ability to send verification codes. It will verify the mobile phone number is a valid phone number (though no country code checks should be done). If the mobile # doesn't include a country code then it will assume the US country code. It will verify the VC exists in table `verification_codes` and that it hasn't expired. It will then pass the input body to an AWS message queue. Messages on that message queue will initiate a Lambda that is capable of sending SMS messages. The SMS message should include an App deep link that will open the App, start the verification code submission process, and fill in the VC.
 
 The system __NEVER__ stores the mobile number.
+
+#### Response
+
+<table>
+<tr><th>Code</th><th>Data / Meaning</th></tr>
+<tr>
+<td>200</td>
+<td>Request to send SMS was submitted successfully</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Bad request, indicating the code or mobile # is not valid</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Caller is not authorized to use this endpoint (the JWT was rejected)</td>
+</tr>
+<tr>
+<td>410</td>
+<td>Code has expired</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Server error</td>
+</tr>
+</table>
 
 __Open Question__: To support people who don't want to give their mobile # should we also have an endpoint that can send an email?
 
