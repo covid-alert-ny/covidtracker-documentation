@@ -1,8 +1,8 @@
 # Verification Server and Key Submission Process
 
-The following describes endpoints and their function to ensure the NYS Covid Tracking system is compatible with the APHL Exposure Notification Verification and Key Servers defined in https://developers.google.com/android/exposure-notifications/verification-system. The NYS Covid Tracking system launch using NYS specific verification and key servers with the intent of migrating to the national APHL key server when ready. Ensuring that the NYS verification server, NYS key server, and NYS Mobile Exposure Notification App are compatible with the national verification and key servers will allow for a seamless transition.
+The following describes endpoints and their function to ensure the NYS Covid Tracking system is compatible with the APHL Exposure Notification Verification and Key Servers defined in https://developers.google.com/android/exposure-notifications/verification-system. The NYS Covid Tracking system will launch using NYS specific verification and key servers with the intent of migrating to the national APHL key server when ready. Ensuring that the NYS verification server, NYS key server, and NYS Mobile Exposure Notification App are compatible with the national verification and key servers will allow for a seamless transition.
 
-The foollowing Verification Flow Diagram can be used to help indicate which part of the process each step below is referring to.
+The following Verification Flow Diagram can be used to help indicate which part of the process each step below is referring to.
 
 ![Verificatioon Flow Diagram](verification-certificate-hmac-flow-diagram.png)
 
@@ -117,7 +117,7 @@ The EPI can initiate a automated transfer of a VC to the user.
 
 #### Description
 
-The handler will verify the authorization header and ensure the JWT has ability to send verification codes. It will verify the mobile phone number is a valid phone number (though no country code checks should be done). If the mobile # doesn't include a country code then it will assume the US country code. It will verify the VC exists in table `verification_codes` and that it hasn't expired. It will then pass the input body to an AWS message queue. Messages on that message queue will initiate a Lambda that is capable of sending SMS messages. The SMS message should include an App deep link that will open the App, start the verification code submission process, and fill in the VC.
+The handler will verify the authorization header and ensure the JWT has ability to send verification codes. It will verify the mobile phone number is a valid phone number (though no country code checks should be done). If the mobile # doesn't include a country code then it will assume the US country code. It will verify the VC check value, that the VC exists in table `verification_codes`, and that it hasn't expired. It will then pass the input body to an AWS message queue. Messages on that message queue will initiate a Lambda that is capable of sending SMS messages. The SMS message should include an App deep link that will open the App, start the verification code submission process, and fill in the VC.
 
 The system __NEVER__ stores the mobile number.
 
